@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nines Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-box strong {
+            display: block;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            color: #a8d0ff;
+        }
+
+        .info-box span {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .trump-suit {
+            font-size: 1.5em;
+        }
+
+        .game-board {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            min-height: 600px;
+        }
+
+        .players-area {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            min-height: 200px;
+        }
+
+        .opponent {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .opponent h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .opponent-cards {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .card-back {
+            width: 50px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .trick-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            min-height: 120px;
+            margin: 30px 0;
+        }
+
+        .played-card-wrapper {
+            text-align: center;
+        }
+
+        .played-card-wrapper .player-name {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            color: #a8d0ff;
+        }
+
+        .player-hand {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .player-hand h3 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .hand-cards {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 70px;
+            height: 100px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .card:hover:not(.disabled) {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        .card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card.played {
+            width: 80px;
+            height: 110px;
+        }
+
+        .card-top, .card-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-bottom {
+            transform: rotate(180deg);
+        }
+
+        .card-rank {
+            font-size: 1.2em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .card-suit {
+            font-size: 1.4em;
+            line-height: 1;
+        }
+
+        .card.hearts .card-rank,
+        .card.hearts .card-suit,
+        .card.diamonds .card-rank,
+        .card.diamonds .card-suit {
+            color: #dc143c;
+        }
+
+        .card.clubs .card-rank,
+        .card.clubs .card-suit,
+        .card.spades .card-rank,
+        .card.spades .card-suit {
+            color: #000;
+        }
+
+        .card-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+        }
+
+        .scores {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-item .name {
+            font-size: 0.9em;
+            color: #a8d0ff;
+            margin-bottom: 5px;
+        }
+
+        .score-item .score {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .score-item .tricks {
+            font-size: 0.8em;
+            color: #ffeb3b;
+            margin-top: 3px;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 1.1em;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: pre-line;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .dummy-hand-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .modal-hands {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .modal-hand {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .modal-hand h3 {
+            margin-bottom: 15px;
+        }
+
+        .winner-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .winner-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .winner-content h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .winner-content p {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>♠️ Nines ♥️</h1>
+        </div>
+
+        <div class="game-info">
+            <div class="info-box">
+                <strong>Trump Suit</strong>
+                <div class="trump-suit" id="trumpDisplay">♣️ Clubs</div>
+            </div>
+            <div class="info-box">
+                <strong>Hand Number</strong>
+                <span id="handNumber">1</span>
+            </div>
+            <div class="info-box">
+                <strong>Current Trick</strong>
+                <span id="trickNumber">1 of 13</span>
+            </div>
+            <div class="info-box">
+                <strong>AI Learning</strong>
+                <span id="learningStatus">Observing...</span>
+            </div>
+        </div>
+
+        <div class="game-board">
+            <div class="players-area">
+                <div class="opponent">
+                    <h3>Player 2</h3>
+                    <div class="opponent-cards" id="player2Cards"></div>
+                </div>
+
+                <div class="opponent">
+                    <h3>Dummy</h3>
+                    <div class="opponent-cards" id="dummyCards"></div>
+                </div>
+
+                <div class="opponent">
+                    <h3>Player 3</h3>
+                    <div class="opponent-cards" id="player3Cards"></div>
+                </div>
+            </div>
+
+            <div class="trick-area" id="trickArea"></div>
+
+            <div class="message" id="message">Click "Start Game" to begin!</div>
+
+            <div class="player-hand">
+                <h3>Your Hand</h3>
+                <div class="hand-cards" id="playerHand"></div>
+            </div>
+
+            <div class="scores">
+                <div class="score-item">
+                    <div class="name">You</div>
+                    <div class="score" id="player1Score">9</div>
+                    <div class="tricks" id="player1Tricks">Tricks: 0</div>
+                </div>
+                <div class="score-item">
+                    <div class="name">Player 2</div>
+                    <div class="score" id="player2Score">9</div>
+                    <div class="tricks" id="player2Tricks">Tricks: 0</div>
+                </div>
+                <div class="score-item">
+                    <div class="name">Player 3</div>
+                    <div class="score" id="player3Score">9</div>
+                    <div class="tricks" id="player3Tricks">Tricks: 0</div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="button" id="startBtn" onclick="game.startNewGame()">Start Game</button>
+                <button class="button" id="nextHandBtn" onclick="game.startNextHand()" style="display: none;">Next Hand</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dummy-hand-modal" id="dummyModal">
+        <div class="modal-content">
+            <h2>Would you like to exchange your hand for the dummy hand?</h2>
+            <div style="text-align: center; margin: 10px 0; font-size: 1.2em;">
+                <strong>Trump Suit: <span id="modalTrumpSuit"></span></strong>
+            </div>
+            <div class="message" id="modalMessage" style="display: none; margin: 10px 0; min-height: 30px;"></div>
+            <div class="modal-hands">
+                <div class="modal-hand">
+                    <h3>Your Hand</h3>
+                    <div class="hand-cards" id="modalYourHand"></div>
+                </div>
+                <div class="modal-hand">
+                    <h3>Dummy Hand</h3>
+                    <div class="hand-cards" id="modalDummyHand"></div>
+                </div>
+            </div>
+            <div class="buttons">
+                <button class="button" onclick="game.keepHand()">Keep My Hand</button>
+                <button class="button" onclick="game.takeDummyHand()">Take Dummy Hand</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="winner-modal" id="winnerModal">
+        <div class="winner-content">
+            <h2>🎉 Game Over! 🎉</h2>
+            <p id="winnerText"></p>
+            <button class="button" onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const SUITS = ['clubs', 'diamonds', 'hearts', 'spades'];
+        const SUIT_SYMBOLS = {
+            'clubs': '♣️',
+            'diamonds': '♦️',
+            'hearts': '♥️',
+            'spades': '♠️'
+        };
+        const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const RANK_VALUES = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8,
+            '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+        };
+
+        const TRUMP_SEQUENCE = ['spades', 'hearts', 'diamonds', 'clubs', 'notrump'];
+
+        class Card {
+            constructor(suit, rank) {
+                this.suit = suit;
+                this.rank = rank;
+                this.value = RANK_VALUES[rank];
+            }
+
+            toString() {
+                return `${this.rank}${SUIT_SYMBOLS[this.suit]}`;
+            }
+
+            createCardElement(clickable = false, onClick = null) {
+                const card = document.createElement('div');
+                card.className = `card ${this.suit}`;
+                if (clickable) {
+                    card.onclick = onClick;
+                } else {
+                    card.style.cursor = 'default';
+                }
+
+                const topDiv = document.createElement('div');
+                topDiv.className = 'card-top';
+                topDiv.innerHTML = `
+                    <span class="card-rank">${this.rank}</span>
+                    <span class="card-suit">${SUIT_SYMBOLS[this.suit]}</span>
+                `;
+
+                const centerDiv = document.createElement('div');
+                centerDiv.className = 'card-center';
+                centerDiv.innerHTML = `<span class="card-suit">${SUIT_SYMBOLS[this.suit]}</span>`;
+
+                const bottomDiv = document.createElement('div');
+                bottomDiv.className = 'card-bottom';
+                bottomDiv.innerHTML = `
+                    <span class="card-rank">${this.rank}</span>
+                    <span class="card-suit">${SUIT_SYMBOLS[this.suit]}</span>
+                `;
+
+                card.appendChild(topDiv);
+                card.appendChild(centerDiv);
+                card.appendChild(bottomDiv);
+
+                return card;
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.players = [
+                    { id: 1, name: 'You', hand: [], score: 9, tricks: 0, isHuman: true },
+                    { id: 2, name: 'Player 2', hand: [], score: 9, tricks: 0, isHuman: false },
+                    { id: 3, name: 'Player 3', hand: [], score: 9, tricks: 0, isHuman: false }
+                ];
+                this.dummyHand = [];
+                this.currentHandIndex = 0;
+                this.currentTrick = [];
+                this.trickNumber = 0;
+                this.dealerIndex = 0;
+                this.leadPlayerIndex = 1;
+                this.currentPlayerIndex = 1;
+                this.trumpSuit = null;
+                this.gameStarted = false;
+
+                // Learning system
+                this.learningData = this.loadLearningData();
+                this.currentHandMoves = [];
+            }
+
+            loadLearningData() {
+                try {
+                    const saved = localStorage.getItem('ninesAILearning');
+                    if (saved) {
+                        return JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.log('No saved learning data');
+                }
+                return {
+                    humanMoves: [],
+                    insights: {
+                        trumpLeadFrequency: 0,
+                        trumpConservation: 0,
+                        lowestWinningCard: 0,
+                        dumpWhenLosing: 0
+                    },
+                    gamesObserved: 0
+                };
+            }
+
+            saveLearningData() {
+                try {
+                    localStorage.setItem('ninesAILearning', JSON.stringify(this.learningData));
+                } catch (e) {
+                    console.log('Could not save learning data');
+                }
+            }
+
+            createDeck() {
+                const deck = [];
+                for (const suit of SUITS) {
+                    for (const rank of RANKS) {
+                        deck.push(new Card(suit, rank));
+                    }
+                }
+                return this.shuffle(deck);
+            }
+
+            shuffle(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            dealCards() {
+                const deck = this.createDeck();
+                this.players[0].hand = deck.slice(0, 13).sort((a, b) => {
+                    if (SUITS.indexOf(a.suit) !== SUITS.indexOf(b.suit)) {
+                        return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+                    }
+                    return b.value - a.value;
+                });
+                this.players[1].hand = deck.slice(13, 26).sort((a, b) => {
+                    if (SUITS.indexOf(a.suit) !== SUITS.indexOf(b.suit)) {
+                        return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+                    }
+                    return b.value - a.value;
+                });
+                this.players[2].hand = deck.slice(26, 39).sort((a, b) => {
+                    if (SUITS.indexOf(a.suit) !== SUITS.indexOf(b.suit)) {
+                        return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+                    }
+                    return b.value - a.value;
+                });
+                this.dummyHand = deck.slice(39, 52).sort((a, b) => {
+                    if (SUITS.indexOf(a.suit) !== SUITS.indexOf(b.suit)) {
+                        return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+                    }
+                    return b.value - a.value;
+                });
+            }
+
+            startNewGame() {
+                this.gameStarted = true;
+                this.currentHandIndex = 0;
+                this.players.forEach(p => {
+                    p.score = 9;
+                    p.tricks = 0;
+                });
+                this.updateScores();
+                document.getElementById('startBtn').style.display = 'none';
+
+                // Determine initial dealer by card flip
+                this.determineInitialDealer();
+            }
+
+            determineInitialDealer() {
+                // Each player draws a card to determine dealer
+                const deck = this.createDeck();
+                const draws = [
+                    { playerIndex: 0, card: deck[0] },
+                    { playerIndex: 1, card: deck[1] },
+                    { playerIndex: 2, card: deck[2] }
+                ];
+
+                // Find highest card
+                let highestDraw = draws[0];
+                for (let i = 1; i < draws.length; i++) {
+                    if (draws[i].card.value > highestDraw.card.value) {
+                        highestDraw = draws[i];
+                    }
+                }
+
+                this.dealerIndex = highestDraw.playerIndex;
+
+                // Show the flip results
+                const message = `Card flip to determine dealer:\n` +
+                    `You drew ${draws[0].card.toString()}\n` +
+                    `Player 2 drew ${draws[1].card.toString()}\n` +
+                    `Player 3 drew ${draws[2].card.toString()}\n` +
+                    `${this.players[this.dealerIndex].name} ${this.dealerIndex === 0 ? 'are' : 'is'} the dealer!`;
+
+                this.showMessage(message);
+
+                setTimeout(() => this.startNextHand(), 4000);
+            }
+
+            startNextHand() {
+                if (this.checkGameOver()) return;
+
+                this.trumpSuit = TRUMP_SEQUENCE[this.currentHandIndex % 5];
+                this.trickNumber = 0;
+                this.currentTrick = [];
+
+                // Rotate dealer (but not on first hand - already determined by card flip)
+                if (this.currentHandIndex > 0) {
+                    this.dealerIndex = (this.dealerIndex + 1) % 3;
+                }
+                this.leadPlayerIndex = (this.dealerIndex + 1) % 3;
+                this.currentPlayerIndex = this.leadPlayerIndex;
+
+                this.players.forEach(p => p.tricks = 0);
+
+                this.dealCards();
+
+                document.getElementById('nextHandBtn').style.display = 'none';
+                this.updateDisplay();
+
+                // Start dummy exchange with dealer first
+                this.currentExchangePlayer = this.dealerIndex;
+                this.exchangeMessages = [];
+                this.playersWhoDecided = [];
+                this.processDummyExchange();
+            }
+
+            processDummyExchange() {
+                // Check if all 3 players have had their turn
+                if (this.playersWhoDecided && this.playersWhoDecided.length >= 3) {
+                    this.finishDummyExchange();
+                    return;
+                }
+
+                if (!this.playersWhoDecided) {
+                    this.playersWhoDecided = [];
+                }
+
+                // Check if current player already decided
+                if (this.playersWhoDecided.includes(this.currentExchangePlayer)) {
+                    // Move to next player
+                    this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+                    this.processDummyExchange();
+                    return;
+                }
+
+                if (this.currentExchangePlayer === 0) {
+                    // Human player's turn
+                    this.showDummyExchange();
+                } else {
+                    // AI player's turn
+                    this.aiDummyExchangeDecision(this.currentExchangePlayer);
+                }
+            }
+
+            aiDummyExchangeDecision(playerIndex) {
+                const player = this.players[playerIndex];
+                const hand = player.hand;
+
+                // Evaluate hand strength
+                const trumpCards = hand.filter(c => c.suit === this.trumpSuit);
+                const highCards = hand.filter(c => c.value >= 11); // J, Q, K, A
+                const aces = hand.filter(c => c.rank === 'A');
+
+                // Decision criteria: weak hand with few trumps and few high cards
+                const shouldTrade = (trumpCards.length <= 2 && highCards.length <= 4) ||
+                                   (trumpCards.length === 0 && aces.length <= 1);
+
+                if (shouldTrade) {
+                    const temp = player.hand;
+                    player.hand = this.dummyHand;
+                    this.dummyHand = temp;
+                    this.exchangeMessages.push(`${player.name} traded for the dummy hand.`);
+                } else {
+                    this.exchangeMessages.push(`${player.name} kept their hand.`);
+                }
+
+                // Mark this player as having decided
+                this.playersWhoDecided.push(playerIndex);
+
+                // Move to next player
+                this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+
+                // Continue with next player
+                setTimeout(() => this.processDummyExchange(), 500);
+            }
+
+            finishDummyExchange() {
+                // Show all exchange messages to human player
+                if (this.exchangeMessages.length > 0) {
+                    this.showMessage(this.exchangeMessages.join(' '));
+                }
+
+                setTimeout(() => {
+                    this.updateDisplay();
+                    this.startTrick();
+                }, 2000);
+            }
+
+            showDummyExchange() {
+                const modal = document.getElementById('dummyModal');
+                const yourHandDiv = document.getElementById('modalYourHand');
+                const dummyHandDiv = document.getElementById('modalDummyHand');
+
+                yourHandDiv.innerHTML = '';
+                dummyHandDiv.innerHTML = '';
+
+                // Display trump suit
+                const modalTrumpSuit = document.getElementById('modalTrumpSuit');
+                if (this.trumpSuit === 'notrump') {
+                    modalTrumpSuit.textContent = 'No Trump';
+                } else {
+                    modalTrumpSuit.textContent = `${SUIT_SYMBOLS[this.trumpSuit]} ${this.trumpSuit.charAt(0).toUpperCase() + this.trumpSuit.slice(1)}`;
+                }
+
+                this.players[0].hand.forEach(card => {
+                    yourHandDiv.appendChild(card.createCardElement(false));
+                });
+
+                // Show card backs for dummy hand
+                for (let i = 0; i < this.dummyHand.length; i++) {
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-back';
+                    dummyHandDiv.appendChild(cardBack);
+                }
+
+                // Show what other players did before you
+                let priorMessages = '';
+                if (this.exchangeMessages.length > 0) {
+                    priorMessages = this.exchangeMessages.join(' ');
+                }
+
+                const modalMessage = document.getElementById('modalMessage');
+                if (priorMessages) {
+                    modalMessage.textContent = priorMessages;
+                    modalMessage.style.display = 'block';
+                } else {
+                    modalMessage.style.display = 'none';
+                }
+
+                modal.style.display = 'flex';
+            }
+
+            keepHand() {
+                this.exchangeMessages.push('You kept your hand.');
+                document.getElementById('dummyModal').style.display = 'none';
+
+                // Mark player as having decided
+                this.playersWhoDecided.push(0);
+
+                // Move to next player
+                this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+
+                setTimeout(() => this.processDummyExchange(), 500);
+            }
+
+            takeDummyHand() {
+                const temp = this.players[0].hand;
+                this.players[0].hand = this.dummyHand;
+                this.dummyHand = temp;
+                this.exchangeMessages.push('You traded for the dummy hand.');
+                document.getElementById('dummyModal').style.display = 'none';
+
+                // Mark player as having decided
+                this.playersWhoDecided.push(0);
+
+                // Move to next player
+                this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+
+                setTimeout(() => this.processDummyExchange(), 500);
+            }
+
+            startTrick() {
+                this.trickNumber++;
+                this.currentTrick = [];
+                this.currentPlayerIndex = this.leadPlayerIndex;
+                this.updateDisplay();
+
+                if (this.currentPlayerIndex !== 0) {
+                    this.playAITurn();
+                } else {
+                    this.showMessage('Your turn! Play a card.');
+                }
+            }
+
+            playCard(playerIndex, cardIndex) {
+                // Check if player has already played in this trick
+                if (this.currentTrick.some(play => play.playerIndex === playerIndex)) {
+                    return; // Player already played, ignore
+                }
+
+                const player = this.players[playerIndex];
+                const card = player.hand[cardIndex];
+
+                // Record human player moves for learning
+                if (playerIndex === 0) {
+                    this.observeHumanMove(card, player.hand);
+                }
+
+                this.currentTrick.push({
+                    playerIndex: playerIndex,
+                    card: card
+                });
+
+                player.hand.splice(cardIndex, 1);
+                this.updateDisplay();
+
+                if (this.currentTrick.length === 3) {
+                    setTimeout(() => this.endTrick(), 1500);
+                } else {
+                    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % 3;
+                    if (this.currentPlayerIndex !== 0) {
+                        setTimeout(() => this.playAITurn(), 1000);
+                    } else {
+                        this.showMessage('Your turn! Play a card.');
+                    }
+                }
+            }
+
+            observeHumanMove(cardPlayed, handBeforePlay) {
+                const player = this.players[0];
+                const isLeading = this.currentTrick.length === 0;
+                const isTrump = cardPlayed.suit === this.trumpSuit && this.trumpSuit !== 'notrump';
+                const tricksNeeded = 4 - player.tricks;
+                const tricksRemaining = 13 - this.trickNumber + 1;
+
+                let currentWinningCard = null;
+                let leadSuit = null;
+
+                if (!isLeading) {
+                    leadSuit = this.currentTrick[0].card.suit;
+                    currentWinningCard = this.currentTrick[0].card;
+
+                    for (let i = 1; i < this.currentTrick.length; i++) {
+                        const trick = this.currentTrick[i];
+                        if (this.trumpSuit !== 'notrump' && trick.card.suit === this.trumpSuit) {
+                            if (currentWinningCard.suit !== this.trumpSuit || trick.card.value > currentWinningCard.value) {
+                                currentWinningCard = trick.card;
+                            }
+                        } else if (trick.card.suit === leadSuit && currentWinningCard.suit !== this.trumpSuit) {
+                            if (trick.card.value > currentWinningCard.value) {
+                                currentWinningCard = trick.card;
+                            }
+                        }
+                    }
+                }
+
+                const trumpCardsInHand = handBeforePlay.filter(c => c.suit === this.trumpSuit && this.trumpSuit !== 'notrump').length;
+                const canFollowSuit = !isLeading && handBeforePlay.some(c => c.suit === leadSuit);
+
+                const moveData = {
+                    isLeading: isLeading,
+                    isTrump: isTrump,
+                    cardValue: cardPlayed.value,
+                    trumpSuit: this.trumpSuit,
+                    tricksWon: player.tricks,
+                    tricksNeeded: tricksNeeded,
+                    tricksRemaining: tricksRemaining,
+                    trumpCardsInHand: trumpCardsInHand,
+                    handSize: handBeforePlay.length,
+                    trickNumber: this.trickNumber,
+                    canFollowSuit: canFollowSuit,
+                    leadSuit: leadSuit,
+                    currentWinningValue: currentWinningCard ? currentWinningCard.value : null,
+                    winningCardIsTrump: currentWinningCard ? (currentWinningCard.suit === this.trumpSuit && this.trumpSuit !== 'notrump') : false
+                };
+
+                this.currentHandMoves.push(moveData);
+                this.learningData.humanMoves.push(moveData);
+
+                // Keep only last 500 moves
+                if (this.learningData.humanMoves.length > 500) {
+                    this.learningData.humanMoves.shift();
+                }
+
+                this.saveLearningData();
+            }
+
+            canPlayCard(playerIndex, card) {
+                if (this.currentTrick.length === 0) return true;
+
+                const leadSuit = this.currentTrick[0].card.suit;
+                const player = this.players[playerIndex];
+                const hasLeadSuit = player.hand.some(c => c.suit === leadSuit);
+
+                if (hasLeadSuit && card.suit !== leadSuit) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            playAITurn() {
+                const player = this.players[this.currentPlayerIndex];
+                let validCards = player.hand.filter((card, idx) =>
+                    this.canPlayCard(this.currentPlayerIndex, card)
+                );
+
+                if (validCards.length === 0) validCards = player.hand;
+
+                let cardToPlay = validCards[0];
+                let cardIndex = player.hand.indexOf(cardToPlay);
+
+                const trickCount = player.tricks;
+                const targetTricks = 4;
+                const tricksNeeded = targetTricks - trickCount;
+                const tricksLeft = 13 - this.trickNumber + 1;
+
+                if (this.currentTrick.length === 0) {
+                    // Leading the trick - use learned behavior
+                    const nonTrumpCards = validCards.filter(c => c.suit !== this.trumpSuit || this.trumpSuit === 'notrump');
+
+                    // Apply learned trump leading frequency
+                    const shouldLeadTrump = this.learningData.insights.trumpLeadFrequency > 0.3 &&
+                                          Math.random() < this.learningData.insights.trumpLeadFrequency;
+
+                    if (shouldLeadTrump && validCards.some(c => c.suit === this.trumpSuit)) {
+                        const trumpCards = validCards.filter(c => c.suit === this.trumpSuit);
+                        trumpCards.sort((a, b) => a.value - b.value);
+                        cardToPlay = trumpCards[0];
+                    } else if (nonTrumpCards.length > 0) {
+                        // Lead with a low non-trump card
+                        nonTrumpCards.sort((a, b) => a.value - b.value);
+                        cardToPlay = nonTrumpCards[0];
+                    } else {
+                        // Only have trump - play lowest trump
+                        validCards.sort((a, b) => a.value - b.value);
+                        cardToPlay = validCards[0];
+                    }
+                    cardIndex = player.hand.indexOf(cardToPlay);
+                } else {
+                    const leadSuit = this.currentTrick[0].card.suit;
+                    const leadCard = this.currentTrick[0].card;
+                    let currentWinningCard = leadCard;
+                    let currentWinningPlayerIndex = this.currentTrick[0].playerIndex;
+
+                    for (let i = 1; i < this.currentTrick.length; i++) {
+                        const trick = this.currentTrick[i];
+                        if (this.trumpSuit !== 'notrump' && trick.card.suit === this.trumpSuit) {
+                            if (currentWinningCard.suit !== this.trumpSuit || trick.card.value > currentWinningCard.value) {
+                                currentWinningCard = trick.card;
+                                currentWinningPlayerIndex = trick.playerIndex;
+                            }
+                        } else if (trick.card.suit === leadSuit && currentWinningCard.suit !== this.trumpSuit) {
+                            if (trick.card.value > currentWinningCard.value) {
+                                currentWinningCard = trick.card;
+                                currentWinningPlayerIndex = trick.playerIndex;
+                            }
+                        }
+                    }
+
+                    // Check if we need more tricks
+                    const needsToWin = trickCount < 4 && tricksNeeded <= tricksLeft;
+
+                    // Separate trump from non-trump valid cards
+                    const trumpCards = validCards.filter(c => c.suit === this.trumpSuit && this.trumpSuit !== 'notrump');
+                    const nonTrumpCards = validCards.filter(c => c.suit !== this.trumpSuit || this.trumpSuit === 'notrump');
+
+                    // Apply learned trump conservation - be more aggressive if human plays trump often
+                    const trumpConservationFactor = Math.max(0.5, this.learningData.insights.trumpConservation);
+
+                    if (needsToWin) {
+                        // Try to win with non-trump first
+                        const winningNonTrump = nonTrumpCards.filter(card => {
+                            if (currentWinningCard.suit === this.trumpSuit && this.trumpSuit !== 'notrump') {
+                                return false; // Can't beat trump with non-trump
+                            }
+                            if (card.suit === leadSuit && currentWinningCard.suit === leadSuit) {
+                                return card.value > currentWinningCard.value;
+                            }
+                            return false;
+                        });
+
+                        if (winningNonTrump.length > 0) {
+                            // Win with lowest winning non-trump
+                            winningNonTrump.sort((a, b) => a.value - b.value);
+                            cardToPlay = winningNonTrump[0];
+                        } else if (trumpCards.length > 0 && currentWinningCard.suit !== this.trumpSuit) {
+                            // Decide whether to use trump based on learned conservation
+                            if (Math.random() > trumpConservationFactor * 0.5) {
+                                // Use lowest trump to win
+                                trumpCards.sort((a, b) => a.value - b.value);
+                                cardToPlay = trumpCards[0];
+                            } else {
+                                // Too early, conserve trump - dump low card
+                                if (nonTrumpCards.length > 0) {
+                                    nonTrumpCards.sort((a, b) => a.value - b.value);
+                                    cardToPlay = nonTrumpCards[0];
+                                } else {
+                                    trumpCards.sort((a, b) => a.value - b.value);
+                                    cardToPlay = trumpCards[0];
+                                }
+                            }
+                        } else if (trumpCards.length > 0 && currentWinningCard.suit === this.trumpSuit) {
+                            // Need higher trump to win
+                            const winningTrumps = trumpCards.filter(c => c.value > currentWinningCard.value);
+                            if (winningTrumps.length > 0) {
+                                // Use lowest winning trump
+                                winningTrumps.sort((a, b) => a.value - b.value);
+                                cardToPlay = winningTrumps[0];
+                            } else {
+                                // Can't win - dump lowest card, avoid wasting trump
+                                if (nonTrumpCards.length > 0) {
+                                    nonTrumpCards.sort((a, b) => a.value - b.value);
+                                    cardToPlay = nonTrumpCards[0];
+                                } else {
+                                    trumpCards.sort((a, b) => a.value - b.value);
+                                    cardToPlay = trumpCards[0];
+                                }
+                            }
+                        } else {
+                            // No trump available, play lowest card
+                            validCards.sort((a, b) => a.value - b.value);
+                            cardToPlay = validCards[0];
+                        }
+                    } else {
+                        // Don't need to win - avoid playing trump, dump lowest card
+                        if (nonTrumpCards.length > 0) {
+                            nonTrumpCards.sort((a, b) => a.value - b.value);
+                            cardToPlay = nonTrumpCards[0];
+                        } else {
+                            // Only have trump - play lowest
+                            trumpCards.sort((a, b) => a.value - b.value);
+                            cardToPlay = trumpCards[0];
+                        }
+                    }
+
+                    cardIndex = player.hand.indexOf(cardToPlay);
+                }
+
+                this.showMessage(`${player.name} plays ${cardToPlay.toString()}`);
+                this.playCard(this.currentPlayerIndex, cardIndex);
+            }
+
+            endTrick() {
+                const leadSuit = this.currentTrick[0].card.suit;
+                let winningPlay = this.currentTrick[0];
+
+                for (let i = 1; i < this.currentTrick.length; i++) {
+                    const play = this.currentTrick[i];
+
+                    if (this.trumpSuit !== 'notrump' && play.card.suit === this.trumpSuit) {
+                        if (winningPlay.card.suit !== this.trumpSuit || play.card.value > winningPlay.card.value) {
+                            winningPlay = play;
+                        }
+                    } else if (play.card.suit === leadSuit && winningPlay.card.suit !== this.trumpSuit) {
+                        if (play.card.value > winningPlay.card.value) {
+                            winningPlay = play;
+                        }
+                    }
+                }
+
+                const winner = this.players[winningPlay.playerIndex];
+                winner.tricks++;
+                this.leadPlayerIndex = winningPlay.playerIndex;
+
+                const verb = winner.name === 'You' ? 'win' : 'wins';
+                this.showMessage(`${winner.name} ${verb} the trick!`);
+                this.updateScores();
+
+                if (this.trickNumber < 13) {
+                    setTimeout(() => this.startTrick(), 2000);
+                } else {
+                    setTimeout(() => this.endHand(), 2000);
+                }
+            }
+
+            endHand() {
+                // Analyze human player's performance this hand
+                if (this.currentHandMoves.length > 0) {
+                    this.analyzeHumanStrategy();
+                }
+                this.currentHandMoves = [];
+
+                this.players.forEach(player => {
+                    const tricksWon = player.tricks;
+                    if (tricksWon < 4) {
+                        player.score += (4 - tricksWon);
+                    } else if (tricksWon > 4) {
+                        player.score -= (tricksWon - 4);
+                    }
+                });
+
+                this.updateScores();
+                this.currentHandIndex++;
+
+                if (this.checkGameOver()) return;
+
+                this.showMessage('Hand complete! Scores updated.');
+                document.getElementById('nextHandBtn').style.display = 'block';
+            }
+
+            analyzeHumanStrategy() {
+                const moves = this.currentHandMoves;
+
+                // Analyze trump leading behavior
+                const leadingMoves = moves.filter(m => m.isLeading);
+                const trumpLeads = leadingMoves.filter(m => m.isTrump).length;
+                if (leadingMoves.length > 0) {
+                    const trumpLeadRate = trumpLeads / leadingMoves.length;
+                    this.learningData.insights.trumpLeadFrequency =
+                        (this.learningData.insights.trumpLeadFrequency * 0.9) + (trumpLeadRate * 0.1);
+                }
+
+                // Analyze trump conservation
+                const followingMoves = moves.filter(m => !m.isLeading && m.trumpCardsInHand > 0);
+                const trumpPlayed = followingMoves.filter(m => m.isTrump).length;
+                if (followingMoves.length > 0) {
+                    const trumpConservationRate = 1 - (trumpPlayed / followingMoves.length);
+                    this.learningData.insights.trumpConservation =
+                        (this.learningData.insights.trumpConservation * 0.9) + (trumpConservationRate * 0.1);
+                }
+
+                // Analyze winning with lowest card strategy
+                const potentialWinningMoves = moves.filter(m => !m.isLeading && m.cardValue > m.currentWinningValue);
+                const lowCardWins = potentialWinningMoves.filter(m => m.cardValue < 12).length;
+                if (potentialWinningMoves.length > 0) {
+                    const lowCardWinRate = lowCardWins / potentialWinningMoves.length;
+                    this.learningData.insights.lowestWinningCard =
+                        (this.learningData.insights.lowestWinningCard * 0.9) + (lowCardWinRate * 0.1);
+                }
+
+                this.learningData.gamesObserved++;
+                this.saveLearningData();
+
+                // Update UI with learning status
+                this.updateLearningDisplay();
+
+                // Show learning progress every 5 hands
+                if (this.learningData.gamesObserved % 5 === 0) {
+                    console.log('AI Learning Progress:', {
+                        handsObserved: this.learningData.gamesObserved,
+                        insights: this.learningData.insights
+                    });
+                }
+            }
+
+            updateLearningDisplay() {
+                const statusElement = document.getElementById('learningStatus');
+                if (statusElement) {
+                    const handsObserved = this.learningData.gamesObserved;
+                    if (handsObserved === 0) {
+                        statusElement.textContent = 'Observing...';
+                    } else if (handsObserved < 5) {
+                        statusElement.textContent = `Learning (${handsObserved})`;
+                    } else if (handsObserved < 20) {
+                        statusElement.textContent = `Adapting (${handsObserved})`;
+                    } else {
+                        statusElement.textContent = `Trained (${handsObserved})`;
+                    }
+                }
+            }
+
+            checkGameOver() {
+                const winners = this.players.filter(p => p.score <= 0);
+                if (winners.length > 0) {
+                    const winner = winners.reduce((min, p) => p.score < min.score ? p : min);
+                    this.showWinner(winner);
+                    return true;
+                }
+                return false;
+            }
+
+            showWinner(winner) {
+                const modal = document.getElementById('winnerModal');
+                const winnerText = document.getElementById('winnerText');
+
+                // Build message with all player scores
+                const verb = winner.name === 'You' ? 'win' : 'wins';
+                let message = `${winner.name} ${verb}!\n\nFinal Scores:\n`;
+                this.players.forEach(player => {
+                    message += `${player.name}: ${player.score}\n`;
+                });
+
+                winnerText.textContent = message;
+                modal.style.display = 'flex';
+            }
+
+            updateDisplay() {
+                const trumpDisplay = document.getElementById('trumpDisplay');
+                if (this.trumpSuit === 'notrump') {
+                    trumpDisplay.textContent = 'No Trump';
+                } else {
+                    trumpDisplay.textContent = `${SUIT_SYMBOLS[this.trumpSuit]} ${this.trumpSuit.charAt(0).toUpperCase() + this.trumpSuit.slice(1)}`;
+                }
+
+                document.getElementById('handNumber').textContent = `${this.currentHandIndex + 1}`;
+                document.getElementById('trickNumber').textContent = `${this.trickNumber} of 13`;
+
+                // Update learning display
+                this.updateLearningDisplay();
+
+                const playerHandDiv = document.getElementById('playerHand');
+                playerHandDiv.innerHTML = '';
+                this.players[0].hand.forEach((card, index) => {
+                    const cardElement = card.createCardElement(true, () => {
+                        if (this.currentPlayerIndex === 0) {
+                            if (this.canPlayCard(0, card)) {
+                                this.playCard(0, index);
+                            } else {
+                                this.showMessage('You must follow suit if possible!');
+                            }
+                        }
+                    });
+                    // Only disable cards that cannot be legally played (when you must follow suit)
+                    if (this.currentPlayerIndex === 0 && this.currentTrick.length > 0 && !this.canPlayCard(0, card)) {
+                        cardElement.classList.add('disabled');
+                    }
+                    playerHandDiv.appendChild(cardElement);
+                });
+
+                document.getElementById('player2Cards').innerHTML = '';
+                for (let i = 0; i < this.players[1].hand.length; i++) {
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-back';
+                    document.getElementById('player2Cards').appendChild(cardBack);
+                }
+
+                document.getElementById('player3Cards').innerHTML = '';
+                for (let i = 0; i < this.players[2].hand.length; i++) {
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-back';
+                    document.getElementById('player3Cards').appendChild(cardBack);
+                }
+
+                document.getElementById('dummyCards').innerHTML = '';
+                // Show dummy hand as face-down cards (never reveal)
+                for (let i = 0; i < this.dummyHand.length; i++) {
+                    const cardBack = document.createElement('div');
+                    cardBack.className = 'card-back';
+                    cardBack.style.width = '50px';
+                    cardBack.style.height = '70px';
+                    document.getElementById('dummyCards').appendChild(cardBack);
+                }
+
+                const trickArea = document.getElementById('trickArea');
+                trickArea.innerHTML = '';
+                this.currentTrick.forEach(play => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'played-card-wrapper';
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'player-name';
+                    nameDiv.textContent = this.players[play.playerIndex].name;
+                    wrapper.appendChild(nameDiv);
+                    const cardElement = play.card.createCardElement(false);
+                    cardElement.classList.add('played');
+                    wrapper.appendChild(cardElement);
+                    trickArea.appendChild(wrapper);
+                });
+
+                this.updateScores();
+            }
+
+            updateScores() {
+                this.players.forEach((player, index) => {
+                    document.getElementById(`player${index + 1}Score`).textContent = player.score;
+                    document.getElementById(`player${index + 1}Tricks`).textContent = `Tricks: ${player.tricks}`;
+                });
+            }
+
+            showMessage(text) {
+                document.getElementById('message').textContent = text;
+            }
+        }
+
+        const game = new Game();
+    </script>
+</body>
+</html>
