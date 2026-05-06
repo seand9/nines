@@ -118,13 +118,32 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            min-height: 120px;
+            min-height: 150px;
             margin: 30px 0;
+            position: relative;
         }
 
         .played-card-wrapper {
             text-align: center;
+            position: absolute;
+        }
+
+        .played-card-wrapper.player1-position {
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .played-card-wrapper.player2-position {
+            top: 0;
+            left: calc(50% - 60px);
+            transform: translateX(-50%);
+        }
+
+        .played-card-wrapper.player3-position {
+            top: 0;
+            left: calc(50% + 60px);
+            transform: translateX(-50%);
         }
 
         .played-card-wrapper .player-name {
@@ -341,6 +360,89 @@
             margin-bottom: 15px;
         }
 
+        @keyframes swapLeft {
+            0% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(-100px) scale(0.8);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes swapRight {
+            0% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(100px) scale(0.8);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-hand.swap-left {
+            animation: swapLeft 0.8s ease-in-out;
+        }
+
+        .modal-hand.swap-right {
+            animation: swapRight 0.8s ease-in-out;
+        }
+
+        @keyframes slideFromBottom {
+            0% {
+                transform: translateY(200px) scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideFromLeft {
+            0% {
+                transform: translate(-300px, -100px) scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideFromRight {
+            0% {
+                transform: translate(300px, -100px) scale(0.7);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .card-animate-player1 {
+            animation: slideFromBottom 0.5s ease-out;
+        }
+
+        .card-animate-player2 {
+            animation: slideFromLeft 0.5s ease-out;
+        }
+
+        .card-animate-player3 {
+            animation: slideFromRight 0.5s ease-out;
+        }
+
         .winner-modal {
             display: none;
             position: fixed;
@@ -405,9 +507,8 @@
                     <div class="opponent-cards" id="player2Cards"></div>
                 </div>
 
-                <div class="opponent">
-                    <h3>Dummy</h3>
-                    <div class="opponent-cards" id="dummyCards"></div>
+                <div class="opponent" style="visibility: hidden;">
+                    <!-- Spacer for layout -->
                 </div>
 
                 <div class="opponent">
@@ -570,7 +671,16 @@
                 try {
                     const saved = localStorage.getItem('ninesAILearning');
                     if (saved) {
-                        return JSON.parse(saved);
+                        const data = JSON.parse(saved);
+                        // Display learning notes on startup
+                        if (data.notes && data.notes.length > 0) {
+                            console.log('=== AI LEARNING NOTES ===');
+                            data.notes.forEach((note, idx) => {
+                                console.log(`${idx + 1}. [${note.timestamp}] ${note.text}`);
+                            });
+                            console.log('========================');
+                        }
+                        return data;
                     }
                 } catch (e) {
                     console.log('No saved learning data');
@@ -583,7 +693,8 @@
                         lowestWinningCard: 0,
                         dumpWhenLosing: 0
                     },
-                    gamesObserved: 0
+                    gamesObserved: 0,
+                    notes: []
                 };
             }
 
@@ -593,6 +704,29 @@
                 } catch (e) {
                     console.log('Could not save learning data');
                 }
+            }
+
+            addLearningNote(noteText) {
+                const timestamp = new Date().toLocaleString();
+                const note = {
+                    timestamp: timestamp,
+                    text: noteText,
+                    gamesObserved: this.learningData.gamesObserved
+                };
+
+                if (!this.learningData.notes) {
+                    this.learningData.notes = [];
+                }
+
+                this.learningData.notes.push(note);
+
+                // Keep only the last 20 notes
+                if (this.learningData.notes.length > 20) {
+                    this.learningData.notes.shift();
+                }
+
+                console.log(`[AI LEARNING] ${noteText}`);
+                this.saveLearningData();
             }
 
             createDeck() {
@@ -845,19 +979,58 @@
             }
 
             takeDummyHand() {
-                const temp = this.players[0].hand;
-                this.players[0].hand = this.dummyHand;
-                this.dummyHand = temp;
-                this.exchangeMessages.push('You traded for the dummy hand.');
-                document.getElementById('dummyModal').style.display = 'none';
+                // Trigger swap animation
+                const yourHandDiv = document.querySelector('#modalYourHand').parentElement;
+                const dummyHandDiv = document.querySelector('#modalDummyHand').parentElement;
 
-                // Mark player as having decided
-                this.playersWhoDecided.push(0);
+                yourHandDiv.classList.add('swap-right');
+                dummyHandDiv.classList.add('swap-left');
 
-                // Move to next player
-                this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+                // Wait for animation to reach midpoint, then swap the hands
+                setTimeout(() => {
+                    const temp = this.players[0].hand;
+                    this.players[0].hand = this.dummyHand;
+                    this.dummyHand = temp;
 
-                setTimeout(() => this.processDummyExchange(), 500);
+                    // Update the displayed cards during the swap
+                    const yourHandCardsDiv = document.getElementById('modalYourHand');
+                    const dummyHandCardsDiv = document.getElementById('modalDummyHand');
+
+                    yourHandCardsDiv.innerHTML = '';
+                    dummyHandCardsDiv.innerHTML = '';
+
+                    // Show the new (dummy) hand
+                    this.players[0].hand.forEach(card => {
+                        yourHandCardsDiv.appendChild(card.createCardElement(false));
+                    });
+
+                    // Show card backs for old hand
+                    for (let i = 0; i < this.dummyHand.length; i++) {
+                        const cardBack = document.createElement('div');
+                        cardBack.className = 'card-back';
+                        dummyHandCardsDiv.appendChild(cardBack);
+                    }
+
+                    // Update the main game board immediately with the new hand
+                    this.updateDisplay();
+                }, 400);
+
+                // Wait for full animation to complete
+                setTimeout(() => {
+                    yourHandDiv.classList.remove('swap-right');
+                    dummyHandDiv.classList.remove('swap-left');
+
+                    this.exchangeMessages.push('You traded for the dummy hand.');
+                    document.getElementById('dummyModal').style.display = 'none';
+
+                    // Mark player as having decided
+                    this.playersWhoDecided.push(0);
+
+                    // Move to next player
+                    this.currentExchangePlayer = (this.currentExchangePlayer + 1) % 3;
+
+                    setTimeout(() => this.processDummyExchange(), 500);
+                }, 800);
             }
 
             startTrick() {
@@ -893,7 +1066,12 @@
                 });
 
                 player.hand.splice(cardIndex, 1);
-                this.updateDisplay();
+
+                // Add the new card to the trick area with animation
+                this.addCardToTrickArea(playerIndex, card);
+
+                // Update everything except the trick area
+                this.updateDisplayExceptTrick();
 
                 if (this.currentTrick.length === 3) {
                     setTimeout(() => this.endTrick(), 1500);
@@ -1182,14 +1360,25 @@
 
             analyzeHumanStrategy() {
                 const moves = this.currentHandMoves;
+                const previousGames = this.learningData.gamesObserved;
 
                 // Analyze trump leading behavior
                 const leadingMoves = moves.filter(m => m.isLeading);
                 const trumpLeads = leadingMoves.filter(m => m.isTrump).length;
                 if (leadingMoves.length > 0) {
                     const trumpLeadRate = trumpLeads / leadingMoves.length;
+                    const oldFreq = this.learningData.insights.trumpLeadFrequency;
                     this.learningData.insights.trumpLeadFrequency =
                         (this.learningData.insights.trumpLeadFrequency * 0.9) + (trumpLeadRate * 0.1);
+
+                    // Add note if significant change detected
+                    if (previousGames >= 3 && Math.abs(trumpLeadRate - oldFreq) > 0.3) {
+                        if (trumpLeadRate > 0.5) {
+                            this.addLearningNote(`Player leads with trump ${(trumpLeadRate * 100).toFixed(0)}% of the time - adopting aggressive trump leading strategy`);
+                        } else {
+                            this.addLearningNote(`Player avoids leading trump (${(trumpLeadRate * 100).toFixed(0)}% rate) - will conserve trump when leading`);
+                        }
+                    }
                 }
 
                 // Analyze trump conservation
@@ -1197,8 +1386,18 @@
                 const trumpPlayed = followingMoves.filter(m => m.isTrump).length;
                 if (followingMoves.length > 0) {
                     const trumpConservationRate = 1 - (trumpPlayed / followingMoves.length);
+                    const oldConservation = this.learningData.insights.trumpConservation;
                     this.learningData.insights.trumpConservation =
                         (this.learningData.insights.trumpConservation * 0.9) + (trumpConservationRate * 0.1);
+
+                    // Add note if significant change
+                    if (previousGames >= 3 && Math.abs(trumpConservationRate - oldConservation) > 0.3) {
+                        if (trumpConservationRate > 0.6) {
+                            this.addLearningNote(`Player hoards trump cards (${(trumpConservationRate * 100).toFixed(0)}% conservation) - will play trump more aggressively to counter`);
+                        } else {
+                            this.addLearningNote(`Player uses trump freely (${(trumpConservationRate * 100).toFixed(0)}% conservation) - adopting similar aggressive trump usage`);
+                        }
+                    }
                 }
 
                 // Analyze winning with lowest card strategy
@@ -1206,8 +1405,23 @@
                 const lowCardWins = potentialWinningMoves.filter(m => m.cardValue < 12).length;
                 if (potentialWinningMoves.length > 0) {
                     const lowCardWinRate = lowCardWins / potentialWinningMoves.length;
+                    const oldLowCard = this.learningData.insights.lowestWinningCard;
                     this.learningData.insights.lowestWinningCard =
                         (this.learningData.insights.lowestWinningCard * 0.9) + (lowCardWinRate * 0.1);
+
+                    // Add note for efficient play detection
+                    if (previousGames >= 5 && lowCardWinRate > 0.7 && oldLowCard < 0.5) {
+                        this.addLearningNote(`Player uses minimal winning cards (${(lowCardWinRate * 100).toFixed(0)}% efficiency) - adopting economical card play strategy`);
+                    }
+                }
+
+                // Milestone notes
+                if (this.learningData.gamesObserved === 0) {
+                    this.addLearningNote('Starting to observe player behavior and adapt strategy');
+                } else if (this.learningData.gamesObserved === 5) {
+                    this.addLearningNote(`Initial pattern analysis complete after 5 hands - adapting to player style`);
+                } else if (this.learningData.gamesObserved === 20) {
+                    this.addLearningNote(`Training complete after 20 hands - fully adapted to player behavior`);
                 }
 
                 this.learningData.gamesObserved++;
@@ -1267,6 +1481,28 @@
             }
 
             updateDisplay() {
+                this.updateDisplayExceptTrick();
+
+                // Rebuild trick area (used when starting a new trick)
+                const trickArea = document.getElementById('trickArea');
+                trickArea.innerHTML = '';
+                this.currentTrick.forEach(play => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = `played-card-wrapper player${play.playerIndex + 1}-position`;
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'player-name';
+                    nameDiv.textContent = this.players[play.playerIndex].name;
+                    wrapper.appendChild(nameDiv);
+                    const cardElement = play.card.createCardElement(false);
+                    cardElement.classList.add('played');
+                    wrapper.appendChild(cardElement);
+                    trickArea.appendChild(wrapper);
+                });
+
+                this.updateScores();
+            }
+
+            updateDisplayExceptTrick() {
                 const trumpDisplay = document.getElementById('trumpDisplay');
                 if (this.trumpSuit === 'notrump') {
                     trumpDisplay.textContent = 'No Trump';
@@ -1313,32 +1549,22 @@
                     document.getElementById('player3Cards').appendChild(cardBack);
                 }
 
-                document.getElementById('dummyCards').innerHTML = '';
-                // Show dummy hand as face-down cards (never reveal)
-                for (let i = 0; i < this.dummyHand.length; i++) {
-                    const cardBack = document.createElement('div');
-                    cardBack.className = 'card-back';
-                    cardBack.style.width = '50px';
-                    cardBack.style.height = '70px';
-                    document.getElementById('dummyCards').appendChild(cardBack);
-                }
-
-                const trickArea = document.getElementById('trickArea');
-                trickArea.innerHTML = '';
-                this.currentTrick.forEach(play => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'played-card-wrapper';
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'player-name';
-                    nameDiv.textContent = this.players[play.playerIndex].name;
-                    wrapper.appendChild(nameDiv);
-                    const cardElement = play.card.createCardElement(false);
-                    cardElement.classList.add('played');
-                    wrapper.appendChild(cardElement);
-                    trickArea.appendChild(wrapper);
-                });
-
                 this.updateScores();
+            }
+
+            addCardToTrickArea(playerIndex, card) {
+                const trickArea = document.getElementById('trickArea');
+                const wrapper = document.createElement('div');
+                wrapper.className = `played-card-wrapper player${playerIndex + 1}-position`;
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'player-name';
+                nameDiv.textContent = this.players[playerIndex].name;
+                wrapper.appendChild(nameDiv);
+                const cardElement = card.createCardElement(false);
+                cardElement.classList.add('played');
+                cardElement.classList.add(`card-animate-player${playerIndex + 1}`);
+                wrapper.appendChild(cardElement);
+                trickArea.appendChild(wrapper);
             }
 
             updateScores() {
